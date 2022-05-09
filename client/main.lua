@@ -11,15 +11,16 @@ local anim = "base"
 
 -- functions
 local function removeMap()
+    holdingMap = false
     local playerPed = PlayerPedId()
     ClearPedTasks(playerPed)
     DetachEntity(NetToObj(objectNetID), true, true)
     DeleteEntity(NetToObj(objectNetID))
     objectNetID = nil
-    holdingMap = false
 end
 
 local function attachMap()
+    holdingMap = true
     local objectModelHash = GetHashKey(objectModel)
     RequestModel(objectModelHash)
     while not HasModelLoaded(objectModelHash) do
@@ -41,7 +42,6 @@ local function attachMap()
     AttachEntityToEntity(object, playerPed, GetPedBoneIndex(playerPed, 28422), 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, 1, 0, 1, 0, 1)
     TaskPlayAnim(playerPed, animDict, anim, 1.0, 1.0, -1, 50, 0, false, false, false)
     objectNetID = netID
-    holdingMap = true
 end
 
 
@@ -51,5 +51,23 @@ RegisterNetEvent('dz-qb-holdmap:client:ToggleMap', function()
         removeMap()
     else
         attachMap()
+    end
+end)
+
+
+-- threads
+CreateThread(function()
+    local sleep = 10000
+    while not LocalPlayer.state.isLoggedIn do
+        -- do nothing
+        Wait(sleep)
+    end
+
+    while true do
+        if not holdingMap and objectNetID then
+            removeMap()
+        end
+
+        Wait(sleep)
     end
 end)
